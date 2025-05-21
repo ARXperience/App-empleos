@@ -3,425 +3,561 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Empleo</title>
+    <title>Plataforma de Trueque</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilos adicionales si son necesarios, por ejemplo, para la animación de carga */
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .line-clamp-3 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
-        }
-        /* Asegurar que los modales con z-50 y z-60 estén sobre el header con z-40 */
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
         header { z-index: 40; }
-        .modal-form { z-index: 50; }
-        .modal-delete-confirm { z-index: 60; }
+        .modal { z-index: 50; }
         .notification-area { z-index: 100; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 to-sky-100 font-sans">
+<body class="bg-gradient-to-br from-green-100 to-cyan-100 font-sans">
 
     <div id="notificationArea" class="fixed top-5 right-5 z-[100]"></div>
 
-    <div id="deleteConfirmationModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-[60] hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Confirmar Eliminación</h3>
-            <p class="text-sm text-gray-600 mb-6">¿Estás seguro de que quieres eliminar esta necesidad de empleo? Esta acción no se puede deshacer.</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancelDeleteButton" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                    Cancelar
-                </button>
-                <button id="confirmDeleteButton" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
-                    Eliminar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="jobFormModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-[50] hidden">
+    <div id="profileModal" class="modal fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden">
         <div class="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="jobFormTitle" class="text-2xl font-semibold text-gray-800">Agregar Nueva Necesidad</h2>
-                <button id="closeFormButton" class="text-gray-500 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                <h2 class="text-2xl font-semibold text-gray-800">Mi Perfil de Intercambio</h2>
+                <button id="closeProfileModal" class="text-gray-500 hover:text-gray-700" aria-label="Cerrar modal de perfil">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <form id="jobForm" class="space-y-4">
-                <input type="hidden" id="jobId">
+            <form id="profileForm" class="space-y-4">
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Título del Puesto <span class="text-red-500">*</span></label>
-                    <input type="text" id="title" name="title" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">Nombre a Mostrar <span class="text-red-500">*</span></label>
+                    <input type="text" id="displayName" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
                 </div>
                 <div>
-                    <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                    <input type="text" id="company" name="company" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="skillsOffered" class="block text-sm font-medium text-gray-700 mb-1">Habilidades/Bienes que Ofrezco (separados por coma)</label>
+                    <textarea id="skillsOffered" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: Clases de guitarra, reparación de PCs, mermelada casera"></textarea>
                 </div>
                 <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                    <input type="text" id="location" name="location" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="skillsSought" class="block text-sm font-medium text-gray-700 mb-1">Habilidades/Bienes que Busco (separados por coma)</label>
+                    <textarea id="skillsSought" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: Ayuda con mudanza, diseño de logo, tomates frescos"></textarea>
                 </div>
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label for="description" class="block text-sm font-medium text-gray-700">Descripción <span class="text-red-500">*</span></label>
-                        <button type="button" id="suggestDescriptionButton" class="text-xs flex items-center text-indigo-600 hover:text-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span id="suggestDescriptionIcon"></span> Sugerir Descripción
-                        </button>
-                    </div>
-                    <textarea id="description" name="description" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                 <div>
+                    <label for="contactInfo" class="block text-sm font-medium text-gray-700 mb-1">Información de Contacto (opcional, visible para otros)</label>
+                    <input type="text" id="contactInfo" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: email@example.com o @usuarioTelegram">
                 </div>
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label for="skills" class="block text-sm font-medium text-gray-700">Habilidades (separadas por coma)</label>
-                         <button type="button" id="suggestSkillsButton" class="text-xs flex items-center text-indigo-600 hover:text-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span id="suggestSkillsIcon"></span> Sugerir Habilidades
-                        </button>
-                    </div>
-                    <input type="text" id="skills" name="skills" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="employmentType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Empleo</label>
-                    <select id="employmentType" name="employmentType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="full-time">Tiempo Completo</option>
-                        <option value="part-time">Medio Tiempo</option>
-                        <option value="contract">Contrato</option>
-                        <option value="temporary">Temporal</option>
-                        <option value="internship">Pasantía</option>
-                        <option value="freelance">Freelance</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="contactEmail" class="block text-sm font-medium text-gray-700 mb-1">Email de Contacto <span class="text-red-500">*</span></label>
-                    <input type="email" id="contactEmail" name="contactEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="contactPhone" class="block text-sm font-medium text-gray-700 mb-1">Teléfono de Contacto</label>
-                    <input type="tel" id="contactPhone" name="contactPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" id="cancelFormButton" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        Cancelar
-                    </button>
-                    <button type="submit" id="saveFormButton" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Guardar
-                    </button>
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">Guardar Perfil</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <header class="bg-white shadow-md sticky top-0 z-40">
+    <div id="itemModal" class="modal fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="itemFormTitle" class="text-2xl font-semibold text-gray-800">Publicar Intercambio</h2>
+                <button id="closeItemModal" class="text-gray-500 hover:text-gray-700" aria-label="Cerrar modal de item">
+                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="itemForm" class="space-y-4">
+                <input type="hidden" id="itemId">
+                <div>
+                    <label for="itemType" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Publicación <span class="text-red-500">*</span></label>
+                    <select id="itemType" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="offer">Ofrezco esto</option>
+                        <option value="demand">Busco esto</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="itemTitle" class="block text-sm font-medium text-gray-700 mb-1">Título <span class="text-red-500">*</span></label>
+                    <input type="text" id="itemTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: Clases de Inglés conversacional">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="itemDescription" class="block text-sm font-medium text-gray-700">Descripción <span class="text-red-500">*</span></label>
+                        <button type="button" id="suggestItemDescriptionButton" class="text-xs flex items-center text-emerald-600 hover:text-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span id="suggestItemDescIcon"></span> Sugerir Descripción (IA)
+                        </button>
+                    </div>
+                    <textarea id="itemDescription" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Detalla qué ofreces o buscas, y qué esperas a cambio si aplica."></textarea>
+                </div>
+                <div>
+                    <label for="itemCategory" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <input type="text" id="itemCategory" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: Educación, Reparación, Alimentos, Arte">
+                </div>
+                 <div>
+                    <label for="itemTags" class="block text-sm font-medium text-gray-700 mb-1">Etiquetas (separadas por coma)</label>
+                    <input type="text" id="itemTags" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej: online, urgente, principiantes">
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">Publicar Intercambio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="aiSuggestionModal" class="modal fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="aiSuggestionTitle" class="text-xl font-semibold text-gray-800">Sugerencia de la IA</h2>
+                <button id="closeAiSuggestionModal" class="text-gray-500 hover:text-gray-700" aria-label="Cerrar modal de sugerencia IA">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="aiSuggestionContent" class="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
+                </div>
+             <div class="mt-4 text-xs text-gray-500">
+                Esta es una sugerencia generada por IA. Revísala y ajústala según sea necesario.
+            </div>
+        </div>
+    </div>
+
+
+    <header class="bg-white shadow-md sticky top-0">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center">
-            <div class="flex items-center text-indigo-600 mb-2 sm:mb-0">
-                <span id="headerIconBriefcase"></span>
-                <h1 class="text-2xl sm:text-3xl font-bold">Portal de Empleo</h1>
+            <div class="flex items-center text-emerald-600 mb-2 sm:mb-0">
+                <span id="headerIconExchange"></span>
+                <h1 class="text-2xl sm:text-3xl font-bold">Plataforma de Trueque</h1>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-4">
-                 <span id="userIdDisplayHeader" class="text-xs text-gray-500 hidden md:block"></span>
-                <button id="addNewJobButton" class="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    <span id="headerIconPlusCircle"></span>
-                    <span class="text-sm sm:text-base">Nueva Oferta</span>
+                <button id="myProfileButton" class="flex items-center bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150">
+                    <span id="headerIconUser"></span> Mi Perfil
+                </button>
+                <button id="newItemButton" class="flex items-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-md transition duration-150">
+                    <span id="headerIconPlus"></span> Publicar
                 </button>
             </div>
         </div>
+         <div id="authLoadingIndicator" class="text-center py-2 bg-yellow-100 text-yellow-700 text-sm">Autenticando...</div>
+         <div id="userIdDisplayHeader" class="text-center py-1 bg-gray-100 text-xs text-gray-600"></div>
     </header>
 
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div class="mb-6 sm:mb-8 p-4 bg-white rounded-lg shadow">
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Buscar por título, empresa, habilidad..." class="w-full py-3 px-4 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                <input type="text" id="searchInput" placeholder="Buscar ofertas o demandas..." class="w-full py-3 px-4 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150">
                 <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" id="mainIconSearch"></span>
             </div>
         </div>
         
-        <div id="loadingIndicator" class="flex flex-col items-center justify-center py-10 hidden">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-3"></div>
-            <p class="text-indigo-600">Cargando necesidades de empleo...</p>
+        <div id="loadingIndicator" class="text-center py-10 hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500 mx-auto mb-3"></div>
+            <p class="text-emerald-600">Cargando intercambios...</p>
         </div>
-
-        <div id="authLoadingIndicator" class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-             <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
-             <p class="text-xl text-gray-700">Autenticando...</p>
-        </div>
-
         <div id="errorDisplay" class="text-center text-red-500 bg-red-100 p-4 rounded-md hidden"></div>
-        
-        <div id="noJobsMessage" class="text-center py-10 hidden">
-            <span id="mainIconInfo" class="mx-auto text-gray-400 mb-4 inline-block"></span>
-            <p id="noJobsText" class="text-xl text-gray-600"></p>
-            <p id="noJobsSubText" class="text-gray-500 mt-2"></p>
+        <div id="noItemsMessage" class="text-center py-10 hidden">
+            <span id="mainIconEmpty" class="mx-auto text-gray-400 mb-4 inline-block"></span>
+            <p id="noItemsText" class="text-xl text-gray-600"></p>
         </div>
 
-        <div id="jobListings" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div id="itemListings" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             </div>
     </main>
 
     <footer class="text-center py-8 mt-10 border-t border-gray-200">
-        <p class="text-sm text-gray-500">&copy; <span id="currentYear"></span> Portal de Empleo. Creado con ❤️.</p>
-        <p id="userIdDisplayFooter" class="text-xs text-gray-400 mt-1"></p>
+        <p class="text-sm text-gray-500">&copy; <span id="currentYear"></span> Plataforma de Trueque Comunitario.</p>
     </footer>
 
     <script type="module">
         // Importaciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, Timestamp, doc, setDoc, query, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, Timestamp, doc, setDoc, query, where, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase y App ID
-        // !! IMPORTANTE !! Si alojas esto fuera del entorno de Canvas (ej. GitHub Pages),
-        // DEBES reemplazar el objeto de abajo con tu propia configuración de Firebase.
-        // Puedes encontrar esta configuración en tu consola de Firebase:
-        // Project Overview -> Project settings (icono de engranaje) -> General -> Your apps -> SDK setup and configuration
         const firebaseConfigFromEnv = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const firebaseConfig = firebaseConfigFromEnv || {
-            apiKey: AIzaSyDF3PNo7CP3rdWdgwVPCGgsqTXGI6Li7LA, // <-- REEMPLAZA ESTO
-            authDomain: "TU_AUTH_DOMAIN", // <-- REEMPLAZA ESTO (ej. tu-proyecto.firebaseapp.com)
-            projectId: "TU_PROJECT_ID", // <-- REEMPLAZA ESTO
-            storageBucket: "TU_STORAGE_BUCKET", // <-- REEMPLAZA ESTO (ej. tu-proyecto.appspot.com)
-            messagingSenderId: "TU_MESSAGING_SENDER_ID", // <-- REEMPLAZA ESTO
-            appId: "TU_APP_ID" // <-- REEMPLAZA ESTO (ej. 1:xxxx:web:xxxx)
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
         };
         
-        // App ID para la ruta de Firestore
         const appIdFromEnv = typeof __app_id !== 'undefined' ? __app_id : null;
-        const appIdForPath = appIdFromEnv || 'default-job-needs-html-app'; // Usar un default si no se inyecta
+        const appIdForPath = appIdFromEnv || 'skill-exchange-html-app';
         
-        // Inicializar Firebase
         const fbApp = initializeApp(firebaseConfig);
         const auth = getAuth(fbApp);
         const db = getFirestore(fbApp);
 
-        const JOB_NEEDS_COLLECTION = 'jobNeeds';
+        const USER_PROFILES_COLLECTION = 'userProfiles';
+        const EXCHANGE_ITEMS_COLLECTION = 'exchangeListings';
 
         // --- Iconos SVG ---
         const icons = {
-            briefcase: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>`,
-            plusCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
+            exchange: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="m5 12 5-5"/><path d="m5 12 5 5"/><path d="M19 12H5"/><path d="m19 12-5-5"/><path d="m19 12-5 5"/><path d="M5 12h14"/></svg>`,
+            user: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+            plus: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 sm:mr-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
             search: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
-            info: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
-            building: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-gray-400"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>`,
-            mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-gray-400"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
-            mail: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-gray-400"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>`,
-            phone: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-gray-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`,
-            edit3: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`,
-            trash2: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`,
-            xCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+            empty: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+            offerArrow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11.7A5 5 0 0 1 5 9h16"></path></svg>`,
+            demandArrow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><polyline points="7 15 3 11 7 7"></polyline><path d="M21 12.3A5 5 0 0 0 19 9H3"></path></svg>`,
+            edit: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+            trash: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+            sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`,
+            loader: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin mr-1"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
             checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
             alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
-            sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`,
-            loader2: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin mr-1"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
+            lightbulb: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M15 14c.2-1 .7-1.7 1.5-2.5C17.7 10.2 18 9 18 7a6 6 0 0 0-12 0c0 2 .3 3.2 1.5 4.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+            messageCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>`,
         };
-        
-        // --- Estado Global de la Aplicación ---
-        let jobNeeds = [];
-        let currentJobIdToEdit = null;
-        let currentJobIdToDelete = null;
+
+        // --- Estado Global ---
         let globalUserId = null;
-        let isAuthReady = false;
-        let unsubscribeJobs = null; // Para la escucha de Firestore
+        let userProfile = null;
+        let exchangeItems = [];
+        let currentItemIdToEdit = null;
+        let unsubscribeItems = null;
 
-        // --- Selectores del DOM ---
-        const DOMElements = {
-            notificationArea: document.getElementById('notificationArea'),
-            deleteConfirmationModal: document.getElementById('deleteConfirmationModal'),
-            cancelDeleteButton: document.getElementById('cancelDeleteButton'),
-            confirmDeleteButton: document.getElementById('confirmDeleteButton'),
-            jobFormModal: document.getElementById('jobFormModal'),
-            jobFormTitle: document.getElementById('jobFormTitle'),
-            closeFormButton: document.getElementById('closeFormButton'),
-            jobForm: document.getElementById('jobForm'),
-            jobIdInput: document.getElementById('jobId'),
-            titleInput: document.getElementById('title'),
-            companyInput: document.getElementById('company'),
-            locationInput: document.getElementById('location'),
-            descriptionInput: document.getElementById('description'),
-            skillsInput: document.getElementById('skills'),
-            employmentTypeInput: document.getElementById('employmentType'),
-            contactEmailInput: document.getElementById('contactEmail'),
-            contactPhoneInput: document.getElementById('contactPhone'),
-            suggestDescriptionButton: document.getElementById('suggestDescriptionButton'),
-            suggestSkillsButton: document.getElementById('suggestSkillsButton'),
-            suggestDescriptionIcon: document.getElementById('suggestDescriptionIcon'),
-            suggestSkillsIcon: document.getElementById('suggestSkillsIcon'),
-            cancelFormButton: document.getElementById('cancelFormButton'),
-            saveFormButton: document.getElementById('saveFormButton'),
-            userIdDisplayHeader: document.getElementById('userIdDisplayHeader'),
-            addNewJobButton: document.getElementById('addNewJobButton'),
-            searchInput: document.getElementById('searchInput'),
-            loadingIndicator: document.getElementById('loadingIndicator'),
-            authLoadingIndicator: document.getElementById('authLoadingIndicator'),
-            errorDisplay: document.getElementById('errorDisplay'),
-            noJobsMessage: document.getElementById('noJobsMessage'),
-            noJobsText: document.getElementById('noJobsText'),
-            noJobsSubText: document.getElementById('noJobsSubText'),
-            jobListings: document.getElementById('jobListings'),
-            currentYear: document.getElementById('currentYear'),
-            userIdDisplayFooter: document.getElementById('userIdDisplayFooter'),
-            headerIconBriefcase: document.getElementById('headerIconBriefcase'),
-            headerIconPlusCircle: document.getElementById('headerIconPlusCircle'),
-            mainIconSearch: document.getElementById('mainIconSearch'),
-            mainIconInfo: document.getElementById('mainIconInfo'),
-        };
+        // --- Selectores del DOM (se asignarán en initializeAppUI) ---
+        let DOMElements = {};
 
-        // --- Funciones de Renderizado y UI ---
+        // --- Funciones UI ---
+        // (displayNotification, renderItemCard, renderItemListings, clearForms, show/hide Modals etc. irán aquí)
+        // ... (El resto del JavaScript irá aquí, similar al Portal de Empleo pero adaptado)
+
+        // --- Inicialización ---
+        function initializeAppUI() {
+            DOMElements = {
+                notificationArea: document.getElementById('notificationArea'),
+                profileModal: document.getElementById('profileModal'),
+                closeProfileModal: document.getElementById('closeProfileModal'),
+                profileForm: document.getElementById('profileForm'),
+                displayNameInput: document.getElementById('displayName'),
+                skillsOfferedInput: document.getElementById('skillsOffered'),
+                skillsSoughtInput: document.getElementById('skillsSought'),
+                contactInfoInput: document.getElementById('contactInfo'),
+                itemModal: document.getElementById('itemModal'),
+                closeItemModal: document.getElementById('closeItemModal'),
+                itemForm: document.getElementById('itemForm'),
+                itemFormTitle: document.getElementById('itemFormTitle'),
+                itemIdInput: document.getElementById('itemId'),
+                itemTypeInput: document.getElementById('itemType'),
+                itemTitleInput: document.getElementById('itemTitle'),
+                itemDescriptionInput: document.getElementById('itemDescription'),
+                suggestItemDescriptionButton: document.getElementById('suggestItemDescriptionButton'),
+                suggestItemDescIcon: document.getElementById('suggestItemDescIcon'),
+                itemCategoryInput: document.getElementById('itemCategory'),
+                itemTagsInput: document.getElementById('itemTags'),
+                aiSuggestionModal: document.getElementById('aiSuggestionModal'),
+                aiSuggestionTitle: document.getElementById('aiSuggestionTitle'),
+                aiSuggestionContent: document.getElementById('aiSuggestionContent'),
+                closeAiSuggestionModal: document.getElementById('closeAiSuggestionModal'),
+                headerIconExchange: document.getElementById('headerIconExchange'),
+                headerIconUser: document.getElementById('headerIconUser'),
+                headerIconPlus: document.getElementById('headerIconPlus'),
+                myProfileButton: document.getElementById('myProfileButton'),
+                newItemButton: document.getElementById('newItemButton'),
+                authLoadingIndicator: document.getElementById('authLoadingIndicator'),
+                userIdDisplayHeader: document.getElementById('userIdDisplayHeader'),
+                searchInput: document.getElementById('searchInput'),
+                mainIconSearch: document.getElementById('mainIconSearch'),
+                loadingIndicator: document.getElementById('loadingIndicator'),
+                errorDisplay: document.getElementById('errorDisplay'),
+                noItemsMessage: document.getElementById('noItemsMessage'),
+                mainIconEmpty: document.getElementById('mainIconEmpty'),
+                noItemsText: document.getElementById('noItemsText'),
+                itemListings: document.getElementById('itemListings'),
+                currentYear: document.getElementById('currentYear'),
+            };
+
+            DOMElements.currentYear.textContent = new Date().getFullYear();
+            DOMElements.headerIconExchange.innerHTML = icons.exchange;
+            DOMElements.headerIconUser.innerHTML = icons.user;
+            DOMElements.headerIconPlus.innerHTML = icons.plus;
+            DOMElements.mainIconSearch.innerHTML = icons.search;
+            DOMElements.mainIconEmpty.innerHTML = icons.empty;
+            DOMElements.suggestItemDescIcon.innerHTML = icons.sparkles;
+            DOMElements.suggestItemDescriptionButton.disabled = true;
+
+
+            // Event Listeners Modales
+            DOMElements.myProfileButton.addEventListener('click', showProfileModal);
+            DOMElements.closeProfileModal.addEventListener('click', () => DOMElements.profileModal.classList.add('hidden'));
+            DOMElements.newItemButton.addEventListener('click', () => showItemModal());
+            DOMElements.closeItemModal.addEventListener('click', () => DOMElements.itemModal.classList.add('hidden'));
+            DOMElements.closeAiSuggestionModal.addEventListener('click', () => DOMElements.aiSuggestionModal.classList.add('hidden'));
+
+            // Event Listeners Formularios
+            DOMElements.profileForm.addEventListener('submit', handleProfileFormSubmit);
+            DOMElements.itemForm.addEventListener('submit', handleItemFormSubmit);
+            
+            // Event Listener para búsqueda
+            DOMElements.searchInput.addEventListener('input', renderItemListings);
+
+            // Event Listener para botón de sugerir descripción de item
+             DOMElements.itemTitleInput.addEventListener('input', () => {
+                DOMElements.suggestItemDescriptionButton.disabled = !DOMElements.itemTitleInput.value.trim();
+            });
+            DOMElements.suggestItemDescriptionButton.addEventListener('click', handleSuggestItemDescription);
+        }
+        
         function displayNotification(message, type) {
-            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
             const icon = type === 'success' ? icons.checkCircle : icons.alertTriangle;
             const notificationHTML = `
-                <div class="p-4 rounded-md shadow-lg text-white flex items-center ${bgColor}">
+                <div class="p-4 rounded-md shadow-lg text-white flex items-center ${bgColor} animate-pulse">
                     ${icon}
-                    <span>${message}</span>
+                    <span class="ml-2">${message}</span>
                 </div>`;
             DOMElements.notificationArea.innerHTML = notificationHTML;
             setTimeout(() => {
                 DOMElements.notificationArea.innerHTML = '';
-            }, 3000);
+            }, 3500);
         }
 
-        function renderJobCard(job) {
-            const employmentTypeDisplay = job.employmentType?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'No especificado';
-            let typeClasses = 'bg-gray-100 text-gray-700';
-            if (job.employmentType === 'full-time') typeClasses = 'bg-green-100 text-green-700';
-            else if (job.employmentType === 'part-time') typeClasses = 'bg-yellow-100 text-yellow-700';
-            else if (job.employmentType === 'contract') typeClasses = 'bg-blue-100 text-blue-700';
+        // --- Lógica de Perfil de Usuario ---
+        async function loadUserProfile() {
+            if (!globalUserId) return;
+            const profileRef = doc(db, `artifacts/${appIdForPath}/${USER_PROFILES_COLLECTION}`, globalUserId);
+            try {
+                const docSnap = await getDoc(profileRef);
+                if (docSnap.exists()) {
+                    userProfile = { id: docSnap.id, ...docSnap.data() };
+                    DOMElements.displayNameInput.value = userProfile.displayName || '';
+                    DOMElements.skillsOfferedInput.value = (userProfile.skillsOffered || []).join(', ');
+                    DOMElements.skillsSoughtInput.value = (userProfile.skillsSought || []).join(', ');
+                    DOMElements.contactInfoInput.value = userProfile.contactInfo || '';
+                } else {
+                    // Perfil no existe, podría inicializar con valores por defecto o dejar vacío
+                    console.log("No such profile document!");
+                    userProfile = { id: globalUserId }; // Para que se cree al guardar
+                }
+            } catch (error) {
+                console.error("Error loading profile:", error);
+                displayNotification("Error al cargar el perfil.", "error");
+            }
+        }
+
+        function showProfileModal() {
+            if (!userProfile && globalUserId) { // Si el perfil es null pero hay userId, intenta cargarlo primero
+                loadUserProfile().then(() => {
+                     DOMElements.profileModal.classList.remove('hidden');
+                });
+            } else if (userProfile) {
+                 DOMElements.profileModal.classList.remove('hidden');
+            } else {
+                displayNotification("Autenticando... por favor espera para abrir el perfil.", "error");
+            }
+        }
+        
+        async function handleProfileFormSubmit(e) {
+            e.preventDefault();
+            if (!globalUserId) {
+                displayNotification("Debes estar autenticado para guardar un perfil.", "error");
+                return;
+            }
+            const profileData = {
+                displayName: DOMElements.displayNameInput.value.trim(),
+                skillsOffered: DOMElements.skillsOfferedInput.value.split(',').map(s => s.trim()).filter(s => s),
+                skillsSought: DOMElements.skillsSoughtInput.value.split(',').map(s => s.trim()).filter(s => s),
+                contactInfo: DOMElements.contactInfoInput.value.trim(),
+                updatedAt: Timestamp.now()
+            };
+            if (!profileData.displayName) {
+                displayNotification("El nombre a mostrar es obligatorio.", "error");
+                return;
+            }
+
+            try {
+                const profileRef = doc(db, `artifacts/${appIdForPath}/${USER_PROFILES_COLLECTION}`, globalUserId);
+                await setDoc(profileRef, profileData, { merge: true }); // Usar merge para crear o actualizar
+                userProfile = { id: globalUserId, ...profileData }; // Actualizar perfil local
+                displayNotification("Perfil guardado con éxito.", "success");
+                DOMElements.profileModal.classList.add('hidden');
+                renderItemListings(); // Re-renderizar por si el nombre del usuario cambió en los items
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                displayNotification("Error al guardar el perfil.", "error");
+            }
+        }
+
+        // --- Lógica de Items de Intercambio ---
+        function clearItemForm() {
+            DOMElements.itemForm.reset();
+            DOMElements.itemIdInput.value = '';
+            currentItemIdToEdit = null;
+            DOMElements.suggestItemDescriptionButton.disabled = true;
+            DOMElements.suggestItemDescIcon.innerHTML = icons.sparkles;
+        }
+
+        function showItemModal(isEditing = false, itemData = null) {
+            clearItemForm();
+             if (!userProfile || !userProfile.displayName) {
+                displayNotification("Por favor, completa tu perfil (al menos el nombre) antes de publicar.", "error");
+                showProfileModal();
+                return;
+            }
+            DOMElements.itemFormTitle.textContent = isEditing ? 'Editar Publicación' : 'Nueva Publicación de Intercambio';
+            if (isEditing && itemData) {
+                DOMElements.itemIdInput.value = itemData.id;
+                DOMElements.itemTypeInput.value = itemData.type;
+                DOMElements.itemTitleInput.value = itemData.title;
+                DOMElements.itemDescriptionInput.value = itemData.description;
+                DOMElements.itemCategoryInput.value = itemData.category || '';
+                DOMElements.itemTagsInput.value = (itemData.tags || []).join(', ');
+                currentItemIdToEdit = itemData.id;
+                DOMElements.suggestItemDescriptionButton.disabled = !itemData.title;
+            }
+            DOMElements.itemModal.classList.remove('hidden');
+        }
+
+        async function handleItemFormSubmit(e) {
+            e.preventDefault();
+            if (!globalUserId || !userProfile || !userProfile.displayName) {
+                displayNotification("Perfil incompleto. Por favor, guarda tu nombre en el perfil.", "error");
+                return;
+            }
+
+            const itemData = {
+                type: DOMElements.itemTypeInput.value,
+                title: DOMElements.itemTitleInput.value.trim(),
+                description: DOMElements.itemDescriptionInput.value.trim(),
+                category: DOMElements.itemCategoryInput.value.trim(),
+                tags: DOMElements.itemTagsInput.value.split(',').map(t => t.trim()).filter(t => t),
+                userId: globalUserId,
+                userDisplayName: userProfile.displayName, // Guardar el nombre del publicador
+                contactInfo: userProfile.contactInfo || '', // Guardar info de contacto del perfil
+                updatedAt: Timestamp.now()
+            };
+
+            if (!itemData.title || !itemData.description) {
+                displayNotification("El título y la descripción son obligatorios.", "error");
+                return;
+            }
+            
+            const exchangeItemsCollectionPath = `artifacts/${appIdForPath}/public/data/${EXCHANGE_ITEMS_COLLECTION}`;
+
+            try {
+                if (currentItemIdToEdit) {
+                    const itemRef = doc(db, exchangeItemsCollectionPath, currentItemIdToEdit);
+                    await updateDoc(itemRef, itemData);
+                    displayNotification("Publicación actualizada.", "success");
+                } else {
+                    itemData.createdAt = Timestamp.now();
+                    await addDoc(collection(db, exchangeItemsCollectionPath), itemData);
+                    displayNotification("Publicación creada con éxito.", "success");
+                }
+                DOMElements.itemModal.classList.add('hidden');
+                clearItemForm();
+            } catch (error) {
+                console.error("Error saving item:", error);
+                displayNotification("Error al guardar la publicación.", "error");
+            }
+        }
+        
+        function renderItemCard(item) {
+            const isOwnItem = item.userId === globalUserId;
+            const typeIndicator = item.type === 'offer' 
+                ? `<span class="flex items-center text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-full">${icons.offerArrow} Ofrece</span>`
+                : `<span class="flex items-center text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded-full">${icons.demandArrow} Busca</span>`;
 
             return `
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 flex flex-col">
-                    <div class="p-5 sm:p-6 flex-grow">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-cyan-200 transition-shadow duration-300">
+                    <div class="p-5 flex-grow">
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-semibold text-indigo-700">${job.title}</h3>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${typeClasses}">
-                                ${employmentTypeDisplay}
-                            </span>
+                            <h3 class="text-lg font-semibold text-emerald-700 line-clamp-2">${item.title}</h3>
+                            ${typeIndicator}
                         </div>
-                        ${job.company ? `<p class="text-sm text-gray-600 mb-1 flex items-center">${icons.building} ${job.company}</p>` : ''}
-                        ${job.location ? `<p class="text-sm text-gray-600 mb-3 flex items-center">${icons.mapPin} ${job.location}</p>` : ''}
-                        <p class="text-gray-700 text-sm mb-3 leading-relaxed line-clamp-3">${job.description}</p>
-                        ${job.skills && job.skills.length > 0 ? `
+                        <p class="text-xs text-gray-500 mb-2">Por: ${item.userDisplayName || 'Usuario Anónimo'} ${item.category ? `| Cat: ${item.category}` : ''}</p>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">${item.description}</p>
+                        ${item.tags && item.tags.length > 0 ? `
                             <div class="mb-3">
-                                <h4 class="text-xs text-gray-500 uppercase font-semibold mb-1">Habilidades:</h4>
                                 <div class="flex flex-wrap gap-1.5">
-                                    ${job.skills.map(skill => `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium">${skill}</span>`).join('')}
+                                    ${item.tags.map(tag => `<span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">${tag}</span>`).join('')}
                                 </div>
                             </div>` : ''}
+                        ${item.contactInfo ? `<p class="text-xs text-cyan-600 mb-1">Contacto: ${item.contactInfo}</p>` : ''}
                     </div>
-                    <div class="bg-gray-50 p-4 sm:p-5 border-t border-gray-200">
-                        <div class="text-sm text-gray-600 mb-3">
-                            ${job.contactEmail ? `<p class="flex items-center mb-1">${icons.mail} ${job.contactEmail}</p>` : ''}
-                            ${job.contactPhone ? `<p class="flex items-center">${icons.phone} ${job.contactPhone}</p>` : ''}
+                    <div class="bg-gray-50 p-3 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <div class="space-x-1">
+                                <button data-id="${item.id}" data-title="${item.title}" data-description="${item.description}" class="suggest-match-button text-xs flex items-center py-1 px-2 rounded-md bg-sky-100 text-sky-700 hover:bg-sky-200">
+                                    ${icons.lightbulb} Ver Coincidencias (IA)
+                                </button>
+                                <button data-item='${JSON.stringify(item).replace(/'/g, "&apos;")}' class="suggest-contact-button text-xs flex items-center py-1 px-2 rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200">
+                                    ${icons.messageCircle} Redactar Contacto (IA)
+                                </button>
+                            </div>
+                            ${isOwnItem ? `
+                            <div class="space-x-1">
+                                <button data-id="${item.id}" class="edit-item-button p-1.5 text-blue-600 hover:bg-blue-100 rounded-full">${icons.edit}</button>
+                                <button data-id="${item.id}" class="delete-item-button p-1.5 text-red-600 hover:bg-red-100 rounded-full">${icons.trash}</button>
+                            </div>` : ''}
                         </div>
-                        <div class="flex justify-end space-x-2">
-                            <button data-id="${job.id}" class="edit-job-button p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full transition duration-150">
-                                ${icons.edit3}
-                            </button>
-                            <button data-id="${job.id}" class="delete-job-button p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition duration-150">
-                                ${icons.trash2}
-                            </button>
-                        </div>
-                        ${job.createdAt ? `<p class="text-xs text-gray-400 mt-2 text-right">Publicado: ${new Date(job.createdAt.seconds * 1000).toLocaleDateString()}</p>` : ''}
+                        <p class="text-xs text-gray-400 mt-2 text-right">Publicado: ${new Date(item.createdAt.seconds * 1000).toLocaleDateString()}</p>
                     </div>
                 </div>`;
         }
-
-        function renderJobListings() {
+        
+        function renderItemListings() {
             DOMElements.loadingIndicator.classList.add('hidden');
             DOMElements.errorDisplay.classList.add('hidden');
             
             const searchTerm = DOMElements.searchInput.value.toLowerCase();
-            const filteredJobNeeds = jobNeeds.filter(job => 
-                job.title.toLowerCase().includes(searchTerm) ||
-                (job.company && job.company.toLowerCase().includes(searchTerm)) ||
-                job.description.toLowerCase().includes(searchTerm) ||
-                job.skills.join(', ').toLowerCase().includes(searchTerm) ||
-                (job.location && job.location.toLowerCase().includes(searchTerm))
+            const filteredItems = exchangeItems.filter(item => 
+                item.title.toLowerCase().includes(searchTerm) ||
+                item.description.toLowerCase().includes(searchTerm) ||
+                (item.userDisplayName && item.userDisplayName.toLowerCase().includes(searchTerm)) ||
+                (item.category && item.category.toLowerCase().includes(searchTerm)) ||
+                (item.tags && item.tags.join(' ').toLowerCase().includes(searchTerm))
             );
 
-            if (filteredJobNeeds.length === 0) {
-                DOMElements.noJobsMessage.classList.remove('hidden');
-                DOMElements.noJobsText.textContent = searchTerm ? "No se encontraron ofertas con ese criterio." : "Aún no hay necesidades de empleo registradas.";
-                DOMElements.noJobsSubText.textContent = searchTerm ? "" : "¡Sé el primero en agregar una! Haz clic en \"Nueva Oferta\".";
-                DOMElements.jobListings.innerHTML = '';
+            if (filteredItems.length === 0) {
+                DOMElements.noItemsMessage.classList.remove('hidden');
+                DOMElements.noItemsText.textContent = searchTerm ? "No se encontraron publicaciones con ese criterio." : "Aún no hay publicaciones de intercambio.";
+                DOMElements.itemListings.innerHTML = '';
             } else {
-                DOMElements.noJobsMessage.classList.add('hidden');
-                DOMElements.jobListings.innerHTML = filteredJobNeeds.map(renderJobCard).join('');
-                addCardEventListeners();
+                DOMElements.noItemsMessage.classList.add('hidden');
+                DOMElements.itemListings.innerHTML = filteredItems.map(renderItemCard).join('');
+                addItemCardEventListeners();
             }
         }
-        
-        function addCardEventListeners() {
-            document.querySelectorAll('.edit-job-button').forEach(button => {
-                button.addEventListener('click', (e) => handleEdit(e.currentTarget.dataset.id));
+
+        function addItemCardEventListeners() {
+            document.querySelectorAll('.edit-item-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const itemId = e.currentTarget.dataset.id;
+                    const itemToEdit = exchangeItems.find(item => item.id === itemId);
+                    if (itemToEdit) showItemModal(true, itemToEdit);
+                });
             });
-            document.querySelectorAll('.delete-job-button').forEach(button => {
-                button.addEventListener('click', (e) => requestDelete(e.currentTarget.dataset.id));
+            document.querySelectorAll('.delete-item-button').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const itemId = e.currentTarget.dataset.id;
+                    // Implementar un modal de confirmación aquí si se desea.
+                    // Por ahora, se elimina directamente.
+                    // if (confirm("¿Seguro que quieres eliminar esta publicación?")) {
+                        try {
+                            const itemRef = doc(db, `artifacts/${appIdForPath}/public/data/${EXCHANGE_ITEMS_COLLECTION}`, itemId);
+                            await deleteDoc(itemRef);
+                            displayNotification("Publicación eliminada.", "success");
+                        } catch (error) {
+                            console.error("Error deleting item:", error);
+                            displayNotification("Error al eliminar.", "error");
+                        }
+                    // }
+                });
+            });
+            document.querySelectorAll('.suggest-match-button').forEach(button => {
+                button.addEventListener('click', handleSuggestMatch);
+            });
+            document.querySelectorAll('.suggest-contact-button').forEach(button => {
+                button.addEventListener('click', handleSuggestContactMessage);
             });
         }
 
-        function clearForm() {
-            DOMElements.jobForm.reset();
-            DOMElements.jobIdInput.value = '';
-            currentJobIdToEdit = null;
-            DOMElements.suggestDescriptionButton.disabled = true;
-            DOMElements.suggestSkillsButton.disabled = true;
-            DOMElements.suggestDescriptionIcon.innerHTML = icons.sparkles;
-            DOMElements.suggestSkillsIcon.innerHTML = icons.sparkles;
-        }
+        // --- Lógica de IA (Gemini) ---
+        async function callGeminiForText(prompt, titleForModal) {
+            DOMElements.aiSuggestionTitle.textContent = titleForModal || "Sugerencia de la IA";
+            DOMElements.aiSuggestionContent.innerHTML = `<div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-emerald-500 mx-auto"></div> <p class="text-center mt-2">Generando...</p>`;
+            DOMElements.aiSuggestionModal.classList.remove('hidden');
 
-        function showJobForm(isEditing = false, jobData = null) {
-            clearForm();
-            if (isEditing && jobData) {
-                DOMElements.jobFormTitle.textContent = 'Editar Necesidad';
-                DOMElements.jobIdInput.value = jobData.id;
-                DOMElements.titleInput.value = jobData.title;
-                DOMElements.companyInput.value = jobData.company || '';
-                DOMElements.locationInput.value = jobData.location || '';
-                DOMElements.descriptionInput.value = jobData.description;
-                DOMElements.skillsInput.value = jobData.skills.join(', ');
-                DOMElements.employmentTypeInput.value = jobData.employmentType || 'full-time';
-                DOMElements.contactEmailInput.value = jobData.contactEmail;
-                DOMElements.contactPhoneInput.value = jobData.contactPhone || '';
-                currentJobIdToEdit = jobData.id;
-                DOMElements.suggestDescriptionButton.disabled = !jobData.title;
-                DOMElements.suggestSkillsButton.disabled = !jobData.title;
-            } else {
-                DOMElements.jobFormTitle.textContent = 'Agregar Nueva Necesidad';
-            }
-            DOMElements.jobFormModal.classList.remove('hidden');
-        }
-
-        function hideJobForm() {
-            DOMElements.jobFormModal.classList.add('hidden');
-            clearForm();
-        }
-        
-        function showDeleteConfirmModal() {
-            DOMElements.deleteConfirmationModal.classList.remove('hidden');
-        }
-
-        function hideDeleteConfirmModal() {
-            DOMElements.deleteConfirmationModal.classList.add('hidden');
-            currentJobIdToDelete = null;
-        }
-        
-        // --- Lógica de Gemini API ---
-        async function callGeminiAPI(promptText, type) {
-            const button = type === 'description' ? DOMElements.suggestDescriptionButton : DOMElements.suggestSkillsButton;
-            const iconElement = type === 'description' ? DOMElements.suggestDescriptionIcon : DOMElements.suggestSkillsIcon;
-            
-            button.disabled = true;
-            iconElement.innerHTML = icons.loader2;
-
-            let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
             const payload = { contents: chatHistory };
             const apiKey = ""; // Canvas proporciona la API key
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${AIzaSyDF3PNo7CP3rdWdgwVPCGgsqTXGI6Li7LA}`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -429,138 +565,148 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Error de la API de Gemini: ${errorData.error?.message || response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Error de API: ${response.statusText}`);
                 const result = await response.json();
-
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    if (type === 'description') DOMElements.descriptionInput.value = text;
-                    if (type === 'skills') DOMElements.skillsInput.value = text;
-                    displayNotification(`✨ ${type === 'description' ? 'Descripción generada' : 'Habilidades sugeridas'} con éxito.`, 'success');
+                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                    DOMElements.aiSuggestionContent.textContent = result.candidates[0].content.parts[0].text;
                 } else {
-                    throw new Error("Respuesta inesperada de la API de Gemini o contenido vacío.");
+                    throw new Error("Respuesta inesperada de la API.");
                 }
             } catch (error) {
-                console.error(`Error calling Gemini API for ${type}:`, error);
-                displayNotification(`Error al generar ${type === 'description' ? 'descripción' : 'habilidades'}. ${error.message}`, 'error');
-            } finally {
-                button.disabled = !DOMElements.titleInput.value; // Habilitar solo si hay título
-                iconElement.innerHTML = icons.sparkles;
+                console.error("Error con Gemini:", error);
+                DOMElements.aiSuggestionContent.textContent = `Error al generar sugerencia: ${error.message}`;
             }
         }
-        
-        // --- Lógica de Firebase ---
-        async function handleJobFormSubmit(e) {
-            e.preventDefault();
-            const title = DOMElements.titleInput.value.trim();
-            const description = DOMElements.descriptionInput.value.trim();
-            const contactEmail = DOMElements.contactEmailInput.value.trim();
 
-            if (!title || !description || !contactEmail) {
-                displayNotification("Por favor, completa los campos obligatorios: Título, Descripción y Email de Contacto.", 'error');
+        function handleSuggestItemDescription() {
+            const title = DOMElements.itemTitleInput.value.trim();
+            const type = DOMElements.itemTypeInput.value === 'offer' ? 'ofrezco' : 'busco';
+            if (!title) {
+                displayNotification("Ingresa un título primero.", "error");
                 return;
             }
+            const prompt = `Eres un experto en redacción para anuncios de trueque. Escribe una descripción breve (2-3 frases) y atractiva para una publicación de trueque donde ${type} "${title}". Destaca los beneficios o lo que se espera a cambio de forma general.`;
+            
+            DOMElements.suggestItemDescIcon.innerHTML = icons.loader;
+            DOMElements.suggestItemDescriptionButton.disabled = true;
 
-            const jobData = {
-                title,
-                company: DOMElements.companyInput.value.trim(),
-                location: DOMElements.locationInput.value.trim(),
-                description,
-                skills: DOMElements.skillsInput.value.split(',').map(skill => skill.trim()).filter(skill => skill),
-                employmentType: DOMElements.employmentTypeInput.value,
-                contactEmail,
-                contactPhone: DOMElements.contactPhoneInput.value.trim(),
-                updatedAt: Timestamp.now(),
-            };
-
-            const jobNeedsCollectionPath = `artifacts/${appIdForPath}/public/data/${JOB_NEEDS_COLLECTION}`;
-
-            try {
-                if (currentJobIdToEdit) {
-                    jobData.updatedAt = Timestamp.now();
-                    const jobDocRef = doc(db, jobNeedsCollectionPath, currentJobIdToEdit);
-                    await updateDoc(jobDocRef, jobData);
-                    displayNotification("Necesidad de empleo actualizada con éxito.", 'success');
-                } else {
-                    jobData.createdAt = Timestamp.now(); // Solo para nuevos
-                    await addDoc(collection(db, jobNeedsCollectionPath), jobData);
-                    displayNotification("Necesidad de empleo agregada con éxito.", 'success');
-                }
-                hideJobForm();
-            } catch (err) {
-                console.error("Error saving job need: ", err);
-                displayNotification("Error al guardar la necesidad de empleo.", 'error');
-            }
-        }
-
-        function handleEdit(jobId) {
-            const jobToEdit = jobNeeds.find(job => job.id === jobId);
-            if (jobToEdit) {
-                showJobForm(true, jobToEdit);
-            }
-        }
-
-        function requestDelete(jobId) {
-            currentJobIdToDelete = jobId;
-            showDeleteConfirmModal();
-        }
-
-        async function confirmDelete() {
-            if (!currentJobIdToDelete) return;
-            try {
-                const jobDocPath = `artifacts/${appIdForPath}/public/data/${JOB_NEEDS_COLLECTION}/${currentJobIdToDelete}`;
-                await deleteDoc(doc(db, jobDocPath));
-                displayNotification("Necesidad de empleo eliminada con éxito.", 'success');
-            } catch (err) {
-                console.error("Error deleting job need: ", err);
-                displayNotification("Error al eliminar la necesidad de empleo.", 'error');
-            } finally {
-                hideDeleteConfirmModal();
-            }
-        }
-        
-        function listenToJobNeeds() {
-            DOMElements.loadingIndicator.classList.remove('hidden');
-            const jobNeedsCollectionPath = `artifacts/${appIdForPath}/public/data/${JOB_NEEDS_COLLECTION}`;
-            const q = query(collection(db, jobNeedsCollectionPath));
-
-            if (unsubscribeJobs) unsubscribeJobs(); // Detener escucha anterior si existe
-
-            unsubscribeJobs = onSnapshot(q, (querySnapshot) => {
-                jobNeeds = [];
-                querySnapshot.forEach((doc) => {
-                    jobNeeds.push({ id: doc.id, ...doc.data() });
-                });
-                jobNeeds.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-                renderJobListings();
-            }, (err) => {
-                console.error("Error fetching job needs: ", err);
-                DOMElements.errorDisplay.textContent = "Error al cargar las necesidades de empleo.";
-                DOMElements.errorDisplay.classList.remove('hidden');
-                DOMElements.loadingIndicator.classList.add('hidden');
+            callGeminiForText(prompt, `Sugerencia para "${title}"`).then(() => {
+                 // Copiar al textarea si el usuario lo desea, o simplemente mostrar en modal
+                 // Por ahora, solo muestra en modal. El usuario puede copiar manualmente.
+                 // DOMElements.itemDescriptionInput.value = DOMElements.aiSuggestionContent.textContent;
+            }).finally(() => {
+                DOMElements.suggestItemDescIcon.innerHTML = icons.sparkles;
+                DOMElements.suggestItemDescriptionButton.disabled = !DOMElements.itemTitleInput.value.trim();
             });
         }
 
-        // --- Inicialización y Event Listeners ---
-        function initializeAppUI() {
-            DOMElements.currentYear.textContent = new Date().getFullYear();
-            DOMElements.headerIconBriefcase.innerHTML = icons.briefcase;
-            DOMElements.headerIconPlusCircle.innerHTML = icons.plusCircle;
-            DOMElements.mainIconSearch.innerHTML = icons.search;
-            DOMElements.mainIconInfo.innerHTML = icons.info;
-            DOMElements.suggestDescriptionIcon.innerHTML = icons.sparkles;
-            DOMElements.suggestSkillsIcon.innerHTML = icons.sparkles;
+        function handleSuggestMatch(event) {
+            const button = event.currentTarget;
+            const itemId = button.dataset.id;
+            const itemTitle = button.dataset.title;
+            const itemDescription = button.dataset.description;
+            const currentItem = exchangeItems.find(it => it.id === itemId);
+
+            if (!userProfile) {
+                displayNotification("Carga tu perfil para obtener mejores sugerencias.", "error");
+                return;
+            }
+            if (!currentItem) {
+                displayNotification("No se encontró el item.", "error");
+                return;
+            }
+
+            const userOffers = (userProfile.skillsOffered || []).join(', ') || 'nada específico';
+            const userSeeks = (userProfile.skillsSought || []).join(', ') || 'nada específico';
             
-            DOMElements.suggestDescriptionButton.disabled = true;
-            DOMElements.suggestSkillsButton.disabled = true;
+            const prompt = `Analiza una posible coincidencia de trueque.
+            Publicación actual (${currentItem.type === 'offer' ? 'OFRECE' : 'BUSCA'}):
+            - Título: "${itemTitle}"
+            - Descripción: "${itemDescription}"
+            - Publicado por: ${currentItem.userDisplayName}
+
+            Mi perfil (Usuario Actual):
+            - Yo Ofrezco: "${userOffers}"
+            - Yo Busco: "${userSeeks}"
+
+            Basado en esto, ¿hay alguna coincidencia directa o complementaria interesante para un trueque? Sugiere 1 o 2 ideas de intercambio o por qué podría ser una buena conexión. Sé breve y directo. Si no ves una buena conexión, explícalo brevemente.`;
+            callGeminiForText(prompt, `Posibles Intercambios para "${itemTitle}"`);
+        }
+        
+        function handleSuggestContactMessage(event) {
+            const button = event.currentTarget;
+            const itemString = button.dataset.item;
+            const item = JSON.parse(itemString.replace(/&apos;/g, "'"));
 
 
-            DOMElements.addNewJobButton.addEventListener('click', () => showJobForm());
-            DOMElements.closeFormButton.addEventListener('click', hideJobForm);
-          
+            if (!userProfile || !userProfile.displayName) {
+                displayNotification("Completa tu perfil (nombre) para redactar mensajes.", "error");
+                return;
+            }
+
+            const myRelevantOfferOrDemand = item.type === 'offer' // Si el item es una oferta, yo estoy interesado en lo que ofrecen
+                ? `estoy interesado/a en tu oferta de "${item.title}" y yo ${ (userProfile.skillsOffered && userProfile.skillsOffered.length > 0) ? `podría ofrecer a cambio: ${(userProfile.skillsOffered || []).join(', ')}` : `actualmente busco: ${(userProfile.skillsSought || []).join(', ')}`}.`
+                : `vi que buscas "${item.title}" y yo ${ (userProfile.skillsOffered && userProfile.skillsOffered.length > 0 && (userProfile.skillsOffered || []).some(s => item.title.toLowerCase().includes(s.toLowerCase()) || item.description.toLowerCase().includes(s.toLowerCase()))) ? `puedo ofrecerte: ${(userProfile.skillsOffered || []).join(', ')}` : `también ofrezco otras cosas como: ${(userProfile.skillsOffered || []).join(', ')}`}.`;
+
+
+            const prompt = `Ayúdame a redactar un mensaje de contacto breve y amigable.
+            Destinatario: ${item.userDisplayName}
+            Asunto: Interés en su publicación de trueque: "${item.title}"
+            Mi nombre: ${userProfile.displayName}
+            Contexto: ${myRelevantOfferOrDemand}
+            
+            Redacta un mensaje inicial para proponer un intercambio o expresar interés. Incluye un saludo y una despedida cordial.`;
+            callGeminiForText(prompt, `Redactar Mensaje para "${item.title}"`);
+        }
+
+
+        // --- Autenticación y Carga Inicial ---
+        onAuthStateChanged(auth, async (user) => {
+            DOMElements.authLoadingIndicator.classList.remove('hidden');
+            if (user) {
+                globalUserId = user.uid;
+                DOMElements.userIdDisplayHeader.textContent = `ID Usuario: ${globalUserId}`;
+                await loadUserProfile(); // Cargar perfil después de tener userId
+                
+                if (unsubscribeItems) unsubscribeItems(); // Detener escucha anterior
+                const itemsCollectionPath = `artifacts/${appIdForPath}/public/data/${EXCHANGE_ITEMS_COLLECTION}`;
+                const q = query(collection(db, itemsCollectionPath)); // Ordenar por fecha después
+                
+                DOMElements.loadingIndicator.classList.remove('hidden');
+                unsubscribeItems = onSnapshot(q, (querySnapshot) => {
+                    exchangeItems = [];
+                    querySnapshot.forEach((doc) => exchangeItems.push({ id: doc.id, ...doc.data() }));
+                    exchangeItems.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+                    renderItemListings();
+                    DOMElements.loadingIndicator.classList.add('hidden');
+                }, (error) => {
+                    console.error("Error fetching items:", error);
+                    DOMElements.errorDisplay.textContent = "Error al cargar publicaciones.";
+                    DOMElements.errorDisplay.classList.remove('hidden');
+                    DOMElements.loadingIndicator.classList.add('hidden');
+                });
+
+            } else {
+                // No hay usuario, intentar iniciar sesión
+                try {
+                    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (initialAuthToken && firebaseConfigFromEnv) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (authError) {
+                    console.error("Error during sign-in:", authError);
+                    DOMElements.errorDisplay.textContent = "Error de autenticación.";
+                    DOMElements.errorDisplay.classList.remove('hidden');
+                }
+            }
+            DOMElements.authLoadingIndicator.classList.add('hidden');
+        });
+
+        // Iniciar la UI
+        initializeAppUI();
+
+    </script>
+</body>
+</html>
